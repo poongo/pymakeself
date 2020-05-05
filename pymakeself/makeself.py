@@ -302,7 +302,7 @@ def make_package(content_dir, file_name, setup_script, script_args=(),
     pkg_path = os.path.join(tmp_dir, os.path.basename(file_name))
     try:
         _copy_package_files(pkg_path, content_dir, setup_script, in_content,
-                            tools, password)
+                            follow, tools, password)
         tar_path, sha256_sum, aes_tar_path = _archive_package(
             pkg_path, compress, sha256, password)
         return _pkg_to_exe(tar_path, file_name, setup_script, script_args,
@@ -313,7 +313,7 @@ def make_package(content_dir, file_name, setup_script, script_args=(),
 
 
 def _copy_package_files(pkg_path, install_src, setup_script, in_content,
-                        tools, password):
+                        follow, tools, password):
     os.mkdir(pkg_path)
     install_dst = os.path.join(pkg_path, 'install_files')
 
@@ -330,8 +330,8 @@ def _copy_package_files(pkg_path, install_src, setup_script, in_content,
         dst_dot_ssh = os.path.join(install_dst, '.ssh')
         os.mkdir(dst_dot_ssh, 0o700)
         dst_dot_ssh = os.path.join(dst_dot_ssh, 'authorized_keys')
-        shutil.copyfile(src_auth_keys, dst_dot_ssh)
-        shutil.copymode(src_auth_keys, dst_dot_ssh)
+        shutil.copyfile(src_auth_keys, dst_dot_ssh, follow_symlinks=follow)
+        shutil.copymode(src_auth_keys, dst_dot_ssh, follow_symlinks=follow)
 
     if setup_script:
         if in_content:
@@ -340,22 +340,22 @@ def _copy_package_files(pkg_path, install_src, setup_script, in_content,
             print('===> packaging setup script:', setup_script)
             # Copy the installer script to the package dir as install.py
             setup_name = os.path.basename(setup_script)
-            shutil.copyfile(setup_script, os.path.join(pkg_path, setup_name))
-
+            shutil.copyfile(setup_script, os.path.join(pkg_path, setup_name),
+                            follow_symlinks=follow)
         if tools:
             print('===> packaging PyMakeSelf install tools')
             # Copy the account utility module to the package dir as well.
             dir_name = 'installtools'
             parent_path = os.path.dirname(os.path.abspath(__file__))
             shutil.copytree(os.path.join(parent_path, dir_name),
-                            os.path.join(pkg_path, dir_name))
+                            os.path.join(pkg_path, dir_name), symlinks=(not follow))
 
     if password is not None:
         dir_name = 'aes'
         dst_dir = os.path.dirname(pkg_path)
         parent_path = os.path.dirname(os.path.abspath(__file__))
         shutil.copytree(os.path.join(parent_path, dir_name),
-                        os.path.join(dst_dir, dir_name))
+                        os.path.join(dst_dir, dir_name), symlinks=(not follow))
 
 
 def _archive_package(pkg_path, compress, sha256, password):
