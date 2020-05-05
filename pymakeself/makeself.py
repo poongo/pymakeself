@@ -320,7 +320,7 @@ def _copy_package_files(pkg_path, install_src, setup_script, in_content,
     print('===> packaging files from', install_src)
     # Copy the install files.
     ignores = shutil.ignore_patterns('*~', '.#*', '.ssh')
-    shutil.copytree(install_src, install_dst, ignore=ignores)
+    shutil.copytree(install_src, install_dst, ignore=ignores, symlinks=(not follow))
 
     # Copy .ssh/authorized_keys if one exists in source.
     src_dot_ssh = os.path.join(install_src, '.ssh')
